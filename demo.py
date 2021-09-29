@@ -133,9 +133,9 @@ def run():
 
 if __name__ == '__main__':
     network, class_names, class_colors = darknet.load_network(
-        "./cfg/yolov4-tiny.cfg",
+        "./cfg/yolov4.cfg",
         "./cfg/coco.data",
-        "yolov4-tiny.weights",
+        "yolov4.weights",
         batch_size=1
     )
     darknet_width = darknet.network_width(network)
