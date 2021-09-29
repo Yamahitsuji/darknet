@@ -29,6 +29,7 @@ vcpkg_installed/
 !build/darknet/YoloWrapper.cs
 .fuse*
 *.weights
+*.h5
 build/*.cmake
 build/*.ninja
 build/*.txt
