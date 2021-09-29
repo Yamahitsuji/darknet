@@ -11,17 +11,17 @@ from queue import Queue
 
 def parser():
     parser = argparse.ArgumentParser(description="YOLO Object Detection")
-    parser.add_argument("--input", type=str, default=0,
-                        help="video source. If empty, uses webcam 0 stream")
-    parser.add_argument("--out_filename", type=str, default="",
+    parser.add_argument("--input", type=str, default="omni_people.mp4",
+                        help="video source. Use 0 for webcam stream")
+    parser.add_argument("--out_filename", type=str, default="out.mp4",
                         help="inference video name. Not saved if empty")
-    parser.add_argument("--weights", default="yolov4.weights",
+    parser.add_argument("--weights", default="yolov4-tiny.weights",
                         help="yolo weights path")
     parser.add_argument("--dont_show", action='store_true',
                         help="windown inference display. For headless systems")
     parser.add_argument("--ext_output", action='store_true',
                         help="display bbox coordinates of detected objects")
-    parser.add_argument("--config_file", default="./cfg/yolov4.cfg",
+    parser.add_argument("--config_file", default="./cfg/yolov4-tiny.cfg",
                         help="path to config file")
     parser.add_argument("--data_file", default="./cfg/coco.data",
                         help="path to data file")
@@ -54,7 +54,7 @@ def check_arguments_errors(args):
 
 
 def set_saved_video(input_video, output_video, size):
-    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     fps = int(input_video.get(cv2.CAP_PROP_FPS))
     video = cv2.VideoWriter(output_video, fourcc, fps, size)
     return video

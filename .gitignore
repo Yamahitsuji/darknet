@@ -41,6 +41,7 @@ build/Makefile
 */vcpkg-manifest-install.log
 build.log
 __pycache__/
+*.mp4
 
 # OS Generated #
 .DS_Store*
@@ -52,6 +53,7 @@ Thumbs.db
 # IDE generated #
 .vs/
 .vscode/
+.idea/
 
 # Managed by CMake
 src/version.h
