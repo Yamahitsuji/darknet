@@ -4,7 +4,6 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 import math
-import darknet
 from omni_tracking.detection import Detection
 from omni_tracking.tracker import Tracker
 from omni_tracking import nn_matching
@@ -12,6 +11,8 @@ from deep_sort_yolov4.tools import generate_detections as gdet
 from deep_sort_yolov4.deep_sort import iou_matching
 import imutils.video
 from timeit import time
+
+import darknet
 
 
 def convert2relative(bbox: Tuple[int, int, int, int]) -> Tuple[float, float, float, float]:
