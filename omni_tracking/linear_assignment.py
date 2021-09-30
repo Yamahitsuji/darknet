@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from . import kalman_filter
