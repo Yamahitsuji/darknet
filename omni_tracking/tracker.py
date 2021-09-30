@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-
 from typing import List, Tuple
 
 import numpy as np
+
 from . import linear_assignment
 from . import iou_matching
 from .track import Track
