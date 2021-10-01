@@ -9,7 +9,6 @@ from omni_tracking.detection import Detection
 from omni_tracking.tracker import Tracker
 from omni_tracking import nn_matching
 from omni_tracking.tools import generate_detections as gdet
-from deep_sort_yolov4.deep_sort import iou_matching
 
 import darknet
 
@@ -33,6 +32,26 @@ def convert2original(image: np.ndarray, bbox: Tuple[int, int, int, int]) -> Tupl
 # 引数は検出中心の(x, y, w, h）
 def convert_xywh2tlwh(xywh: Tuple[int, int, int, int]) -> Tuple[int, int, int, int]:
     return int(xywh[0] - xywh[2] / 2), int(xywh[1] - xywh[3] / 2), xywh[2], xywh[3]
+
+
+def has_contrast_detection(tlwh: Tuple[int, int, int, int], candidates: List[Tuple[int, int, int, int]], img_width: int,
+                           threshold: float = 0.7) -> bool:
+    shifted_tl = (tlwh[0] + img_width, tlwh[1])
+    shifted_br = (shifted_tl[0] + tlwh[2], shifted_tl[1] + tlwh[3])
+    candidates: np.ndarray = np.array(candidates)
+    candidates_tl = candidates[:, :2]
+    candidates_br = candidates[:, :2] + candidates[:, 2:]
+
+    tl = np.c_[np.maximum(shifted_tl[0], candidates_tl[:, 0])[:, np.newaxis],
+               np.maximum(shifted_tl[1], candidates_tl[:, 1])[:, np.newaxis]]
+    br = np.c_[np.minimum(shifted_br[0], candidates_br[:, 0])[:, np.newaxis],
+               np.minimum(shifted_br[1], candidates_br[:, 1])[:, np.newaxis]]
+    wh = np.maximum(0., br - tl)
+    area_intersection = wh.prod(axis=1)
+    area_bbox = tlwh[2] * tlwh[3]
+    area_candidates = candidates[:, 2:].prod(axis=1)
+    ious = area_intersection / (area_bbox + area_candidates - area_intersection)
+    return ious.max() >= threshold
 
 
 network, class_names, class_colors = darknet.load_network(
@@ -103,11 +122,8 @@ while True:
         candidates_tlwh.append(tlwh)
     valid_detections: List[Tuple[str, float, Tuple[int, int, int, int]]] = []
     for (label, confidence, tlwh) in detections_in_area:
-        # 右境界付近の検出は左境界付近に対応する検出が存在するか確認し、存在する場合はbboxの色を変える
-        if tlwh[0] + tlwh[2] < quarter_left:
-            shifted_tlwh = np.array([tlwh[0] + width, tlwh[1], tlwh[2], tlwh[3]], dtype=np.int)
-            if iou_matching.iou(shifted_tlwh, np.array(candidates_tlwh, dtype=np.int)).max() >= 0.7:
-                continue
+        if tlwh[0] + tlwh[2] < quarter_left and has_contrast_detection(tlwh, candidates_tlwh, width):
+            break
         valid_detections.append((label, confidence, tlwh))
 
     detections: List[Detection] = []
