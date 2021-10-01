@@ -8,7 +8,7 @@ from timeit import time
 from omni_tracking.detection import Detection
 from omni_tracking.tracker import Tracker
 from omni_tracking import nn_matching
-from deep_sort_yolov4.tools import generate_detections as gdet
+from omni_tracking.tools import generate_detections as gdet
 from deep_sort_yolov4.deep_sort import iou_matching
 
 import darknet
