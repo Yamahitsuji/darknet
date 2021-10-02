@@ -133,7 +133,8 @@ while True:
         tlwh = detection[2]
         theta = (tlwh[0] - padding_width) / width * math.tau
         phi = (tlwh[1] - height / 2) / (height / 2) * math.pi / 2
-        detections.append(Detection(theta, phi, tlwh[2], tlwh[3], confidence, feature, width, height))
+        radius = int(width/math.tau)
+        detections.append(Detection(theta, phi, radius, tlwh[2], tlwh[3], confidence, feature, width, height))
 
     tracker.predict()
     tracker.update(detections)

@@ -147,7 +147,7 @@ class Tracker:
         return matches, unmatched_tracks, unmatched_detections
 
     def _initiate_track(self, detection: Detection) -> None:
-        mean, covariance = self.kf.initiate(np.array(detection.to_scpah()))
+        mean, covariance = self.kf.initiate(np.array(detection.to_xyzah()))
         self.tracks.append(Track(
             mean, covariance, self.img_w, self.img_h, self._next_id, self.n_init, self.max_age,
             detection.feature))

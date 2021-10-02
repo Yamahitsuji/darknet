@@ -189,7 +189,7 @@ def gate_cost_matrix(
     gating_dim = 3 if only_position else 5
     gating_threshold = kalman_filter.chi2inv95[gating_dim]
     measurements = np.asarray(
-        [detections[i].to_scpah() for i in detection_indices])
+        [detections[i].to_xyzah() for i in detection_indices])
     for row, track_idx in enumerate(track_indices):
         track = tracks[track_idx]
         gating_distance = kf.gating_distance(

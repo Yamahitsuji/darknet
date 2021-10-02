@@ -25,13 +25,13 @@ class KalmanFilter:
 
     The 10-dimensional state space
 
-        sin(theta), cos(theta), phi, a, h, vsin(theta), vcos(theta), vphi, va, vh
+        x, y, z, a, h, vx, vy, vz, va, vh
 
-    contains the bounding box center position (theta, phi), aspect ratio a, height h,
+    contains the bounding box top-left position (x, y, z), aspect ratio a, height h,
     and their respective velocities.
 
     Object motion follows a constant velocity model. The bounding box location
-    (sin(theta), cos(theta), phi, a, h) is taken as direct observation of the state space (linear
+    (x, y, z, a, h) is taken as direct observation of the state space (linear
     observation model).
 
     """
@@ -57,7 +57,7 @@ class KalmanFilter:
         Parameters
         ----------
         measurement : ndarray
-            Bounding box coordinates (sin(theta), cos(theta), phi, a, h) with center position (theta, phi),
+            Bounding box coordinates (x, y, z, a, h) with center position (theta, phi),
             aspect ratio a, and height h.
 
         Returns
@@ -166,8 +166,8 @@ class KalmanFilter:
         covariance : ndarray
             The state's covariance matrix (10x10 dimensional).
         measurement : ndarray
-            The 5 dimensional measurement vector (sin(theta), cos(theta), phi, a, h), where (theta, phi)
-            is the center position, a the aspect ratio, and h the height of the
+            The 5 dimensional measurement vector (x, y, z, a, h), where (x, y, z)
+            is the top-left position, a the aspect ratio, and h the height of the
             bounding box.
 
         Returns
@@ -206,7 +206,7 @@ class KalmanFilter:
             Covariance of the state distribution (10x10 dimensional).
         measurements : ndarray
             An Nx5 dimensional matrix of N measurements, each in
-            format (sin(theta), cos(theta), phi, a, h) where (theta, phi) is the bounding box center
+            format (x, y, z, a, h) where (x, y, z) is the bounding box top-left
             position, a the aspect ratio, and h the height.
         only_position : Optional[bool]
             If True, distance computation is done with respect to the bounding

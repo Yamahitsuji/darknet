@@ -22,8 +22,8 @@ class TrackState:
 
 class Track:
     """
-    A single target track with state space `(sin_theta, cos_theta, phi, a, h)` and associated
-    velocities, where `(sin_theta, cos_theta, phi)` is the center of the bounding box, `a` is the
+    A single target track with state space `(x, y, z, a, h)` and associated
+    velocities, where `(x, y, z)` is the top-left of the bounding box, `a` is the
     aspect ratio and `h` is the height.
 
     Parameters
@@ -108,10 +108,11 @@ class Track:
         """
         h = int(self.mean[4])
         w = int(self.mean[3] * h)
-        sin_theta: float = self.mean[0]
-        cos_theta: float = self.mean[1]
-        theta: float = _normalize_theta(math.atan2(sin_theta, cos_theta))
-        phi: float = self.mean[2]
+        x: int = self.mean[0]
+        y: int = self.mean[1]
+        z: int = self.mean[2]
+        theta: float = _normalize_theta(math.atan2(y, x))
+        phi: float = math.atan2(z, math.sqrt(x**2 + y**2))
         x = int(theta / math.tau * self.img_w)
         y = int(phi / (math.pi / 2) * self.img_h / 2 + self.img_h / 2)
 
@@ -141,7 +142,7 @@ class Track:
         cache.
         """
         self.mean, self.covariance = kf.update(
-            self.mean, self.covariance, np.array(detection.to_scpah()))
+            self.mean, self.covariance, np.array(detection.to_xyzah()))
         self.features.append(detection.feature)
 
         self.hits += 1

@@ -24,6 +24,7 @@ class Detection:
     """
     theta: float
     phi: float
+    radius: float
     height: int
     width: int
     confidence: float
@@ -31,11 +32,12 @@ class Detection:
     img_w: int
     img_h: int
 
-    def __init__(self, theta: float, phi: float, width: int, height: int, confidence: float,
+    def __init__(self, theta: float, phi: float, radius: int, width: int, height: int, confidence: float,
                  feature: np.ndarray, img_w: int, img_h: int) -> None:
         self.theta = theta
         self._normalize_theta()
         self.phi = phi
+        self.radius = radius
         self.width = width
         self.height = height
         self.confidence = confidence
@@ -58,12 +60,14 @@ class Detection:
         tlwh = self.to_tlwh()
         return tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]
 
-    def to_scpah(self) -> Tuple[float, float, float, float, int]:
+    def to_xyzah(self) -> Tuple[int, int, int, float, int]:
+        """"
+        Convert bounding box to format (world_x, world_y, world_z, aspect ratio, height)
         """
-            Convert bounding box to format `(sin θ, cos θ, φ, aspect ratio,
-            height)`, where the aspect ratio is `width / height`.
-        """
-        return math.sin(self.theta), math.cos(self.theta), self.phi, self.width / self.height, self.height
+        x = int(self.radius * math.cos(self.phi) * math.cos(self.theta))
+        y = int(self.radius * math.cos(self.phi) * math.sin(self.theta))
+        z = int(self.radius * math.sin(self.phi))
+        return x, y, z, self.width / self.height, self.height
 
     def _normalize_theta(self) -> None:
         while self.theta < 0 or math.tau <= self.theta:
