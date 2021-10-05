@@ -2,7 +2,6 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 import math
-import imutils.video
 from timeit import time
 
 from omni_tracking.detection import Detection
@@ -82,9 +81,6 @@ encoder = gdet.create_box_encoder(model_filename, batch_size=1)
 metric = nn_matching.NearestNeighborDistanceMetric(max_cosine_distance)
 tracker = Tracker(width, height, metric)
 nms_max_overlap = 1.0
-
-fps = 0.0
-fps_imutils = imutils.video.FPS().start()
 
 while True:
     ret, frame = cap.read()
