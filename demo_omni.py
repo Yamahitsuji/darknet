@@ -9,6 +9,7 @@ from omni_tracking.detection import Detection
 from omni_tracking.tracker import Tracker
 from omni_tracking import nn_matching
 from omni_tracking.tools import generate_detections as gdet
+from omni_tracking.tools import preprocessing
 
 import darknet
 
@@ -80,6 +81,7 @@ model_filename = 'deep_sort_yolov4/model_data/mars-small128.pb'
 encoder = gdet.create_box_encoder(model_filename, batch_size=1)
 metric = nn_matching.NearestNeighborDistanceMetric(max_cosine_distance)
 tracker = Tracker(width, height, metric)
+nms_max_overlap = 1.0
 
 fps = 0.0
 fps_imutils = imutils.video.FPS().start()
@@ -105,6 +107,12 @@ while True:
         bbox_adjusted = convert2original(expanded_frame, xywh)
         tlwh = convert_xywh2tlwh(bbox_adjusted)
         adjusted_detections.append((label, confidence, tlwh))
+
+    # Run non-maxima suppression.
+    boxes = np.array([d[2] for d in adjusted_detections])
+    scores = np.array([d[1] for d in adjusted_detections])
+    indices = preprocessing.non_max_suppression(boxes, nms_max_overlap, scores)
+    adjusted_detections = [adjusted_detections[i] for i in indices]
 
     # 検出の重複を削除する
     # 1. personのみにする
