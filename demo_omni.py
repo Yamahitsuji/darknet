@@ -79,7 +79,7 @@ max_cosine_distance = 0.3
 model_filename = 'deep_sort_yolov4/model_data/mars-small128.pb'
 encoder = gdet.create_box_encoder(model_filename, batch_size=1)
 metric = nn_matching.NearestNeighborDistanceMetric(max_cosine_distance)
-tracker = Tracker(width, height, metric)
+tracker = Tracker(width, height, metric, max_iou_distance=0.7)
 nms_max_overlap = 1.0
 
 while True:
