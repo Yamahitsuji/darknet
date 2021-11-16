@@ -98,6 +98,8 @@ class Track:
         self._n_init = n_init
         self._max_age = max_age
 
+        self.user = ''
+
     def to_tlwh(self) -> Tuple[int, int, int, int]:
         """Get current position in bounding box format `(top left x, top left y,
         width, height)`.
@@ -128,6 +130,13 @@ class Track:
         """
         tlwh = self.to_tlwh()
         return tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]
+
+    def to_xywh(self) -> Tuple[int, int, int, int]:
+        tlwh = self.to_tlwh()
+        return int(tlwh[0] + tlwh[2] / 2), int(tlwh[1] + tlwh[3] / 2), tlwh[2], tlwh[3]
+
+    def to_xyz(self) -> Tuple[int, int, int]:
+        return int(self.mean[0]), int(self.mean[1]), int(self.mean[2])
 
     def predict(self, kf: KalmanFilter) -> None:
         """Propagate the state distribution to the current time step using a
