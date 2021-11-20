@@ -130,7 +130,7 @@ def tracking():
             w = int(h / aspect)
         else:
             h = int(w * aspect)
-        return int(center_y - h / 2), int(center_x - w / 2), int(center_y + h / 2), int(center_x + w / 2)
+        return int(center_x - w / 2), int(center_y - h / 2), int(center_x + w / 2), int(center_y + h / 2)
 
     while True:
         ret, frame = cap.read()
