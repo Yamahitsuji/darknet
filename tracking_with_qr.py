@@ -1,16 +1,3 @@
-import argparse
-import asyncio
-import json
-import os
-import ssl
-import uuid
-
-from aiohttp import web
-from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-from av import VideoFrame
-
-from threading import Thread
-
 from typing import Tuple, List
 import cv2
 from pyzbar.pyzbar import decode
@@ -31,8 +18,8 @@ STATUS_TRACKED = 1
 
 
 class User:
-    def __init__(self):
-        self.uid = str(uuid.uuid4())
+    def __init__(self, uid: str):
+        self.uid = uid
         self.frame = None
         self.status = STATUS_INIT
 
@@ -55,102 +42,7 @@ class UserCollection:
         self.users.append(user)
 
 
-ROOT = os.path.dirname(__file__)
-
-
-class VideoImageTrack(VideoStreamTrack):
-    """
-    A video stream track that returns a rotating image.
-    """
-
-    def __init__(self, user: User):
-        super().__init__()  # don't forget this!
-        self.user = user
-
-    async def recv(self):
-        pts, time_base = await self.next_timestamp()
-
-        frame = VideoFrame.from_ndarray(self.user.frame, format='bgr24')
-        frame.pts = pts
-        frame.time_base = time_base
-        return frame
-
-
-async def index(request):
-    content = open(os.path.join(ROOT, "templates/index.html"), "r").read()
-    return web.Response(content_type="text/html", text=content)
-
-
-async def javascript(request):
-    content = open(os.path.join(ROOT, "templates/client.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-
-async def offer(request):
-    params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
-
-    pc = RTCPeerConnection()
-    pcs.add(pc)
-
-    @pc.on("connectionstatechange")
-    async def on_connectionstatechange():
-        print("Connection state is %s" % pc.connectionState)
-        if pc.connectionState == "failed":
-            await pc.close()
-            pcs.discard(pc)
-
-    await pc.setRemoteDescription(offer)
-    user = User()
-    user_collection.users.append(user)
-    user.frame = user.gen_qr()
-    pc.addTrack(VideoImageTrack(user))
-
-    answer = await pc.createAnswer()
-    await pc.setLocalDescription(answer)
-
-    return web.Response(
-        content_type="application/json",
-        text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-        ),
-    )
-
-
-pcs = set()
 user_collection = UserCollection()
-
-
-async def on_shutdown(app):
-    # close peer connections
-    coros = [pc.close() for pc in pcs]
-    await asyncio.gather(*coros)
-    pcs.clear()
-
-
-def aiohttp_server():
-    app = web.Application()
-    app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/", index)
-    app.router.add_get("/client.js", javascript)
-    app.router.add_post("/offer", offer)
-    runner = web.AppRunner(app)
-    return runner
-
-
-def run_server(runner, args):
-    if args.cert_file:
-        ssl_context = ssl.SSLContext()
-        ssl_context.load_cert_chain(args.cert_file, args.key_file)
-    else:
-        ssl_context = None
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(runner.setup())
-    site = web.TCPSite(runner, args.host, args.port, ssl_context=ssl_context)
-    loop.run_until_complete(site.start())
-    loop.run_forever()
 
 
 # detection and tracking
@@ -164,7 +56,7 @@ def tracking():
     darknet_width: int = darknet.network_width(network)
     darknet_height: int = darknet.network_height(network)
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture('./omni_qr.mp4')
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     video_fps: int = int(cap.get(cv2.CAP_PROP_FPS))
     width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -173,7 +65,7 @@ def tracking():
     radius = int(width / math.tau)
     expanded_width: int = width + padding_width * 2
     quarter_left: int = int(padding_width + expanded_width / 4)
-    writer = cv2.VideoWriter("out1.mp4", fourcc, video_fps, (expanded_width, height))
+    writer = cv2.VideoWriter("out_tracking_with_qr.mp4", fourcc, video_fps, (expanded_width, height))
 
     # tracking parameters
     max_cosine_distance = 0.3
@@ -232,17 +124,13 @@ def tracking():
         z = int(radius * math.sin(phi))
         return x, y, z
 
-    def trim_target_from_frame(center_x: int, center_y: int, w: int, h: int, frame: np.ndarray) -> np.ndarray:
+    def get_frame_area_tlbr(center_x: int, center_y: int, w: int, h: int) -> Tuple[int, int, int, int]:
         aspect = 4 / 3
         if h / w > aspect:
             w = int(h / aspect)
         else:
             h = int(w * aspect)
-        top = int(center_y - h / 2)
-        bottom = int(center_y + h / 2)
-        left = int(center_x - w / 2)
-        right = int(center_x + w / 2)
-        return cv2.resize(frame[top:bottom, left:right], dsize=(300, 400))
+        return int(center_y - h / 2), int(center_x - w / 2), int(center_y + h / 2), int(center_x + w / 2)
 
     while True:
         ret, frame = cap.read()
@@ -308,11 +196,13 @@ def tracking():
             for code in d:
                 uid = code.data.decode('utf-8')
                 user = user_collection.get_user_by_id(uid)
-                # idに対応するuserが存在しない、もしくはuserが存在してすでにトラックされている場合は無視する
-                if not user or user.status == STATUS_TRACKED:
+                if not user:
+                    user = User(uid)
+                    user_collection.add_user(user)
+                if user.status == STATUS_TRACKED:
                     continue
 
-                x, y, _, _ = code.rect
+                x, y, w, h = code.rect
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
                 qr_point = np.array(convert2xyz(qr_theta, qr_phi))
                 tmp_distance = 1
@@ -329,21 +219,28 @@ def tracking():
                 if nearest_idx >= 0:
                     user.status = STATUS_TRACKED
                     tracker.tracks[nearest_idx].user = user
+                    cv2.rectangle(expanded_frame, (x, y), (x + w, y + y), (0, 0, 255), 1)
 
         # view
         for track in tracker.tracks:
-            if not track.user:
-                continue
+            if track.user:
+                color = (0, 255, 0)
+                xywh = track.to_xywh()
+                tlbr = get_frame_area_tlbr(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3])
+                cv2.rectangle(expanded_frame, tlbr[:2], tlbr[2:], color, 5)
+                cv2.putText(expanded_frame, track.user.uid, tlbr[:2], cv2.FONT_HERSHEY_SIMPLEX, 1, color)
+            else:
+                color = (255, 0, 0)
+                tlbr = track.to_tlbr()
+                tlbr = (tlbr[0] + padding_width, tlbr[1], tlbr[2] + padding_width, tlbr[3])
+                cv2.rectangle(expanded_frame, tlbr[:2], tlbr[2:], color, 5)
 
-            xywh = track.to_xywh()
-            target = trim_target_from_frame(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3], expanded_frame)
-            track.user.frame = target
 
         cv2.line(expanded_frame, (padding_width, 0), (padding_width, height), (0, 0, 255), thickness=5)
         cv2.line(expanded_frame, (padding_width + width - 1, 0), (padding_width + width - 1, height),
                  (0, 0, 255), thickness=5)
         writer.write(expanded_frame)
-        cv2.imshow('Inference', expanded_frame)
+        cv2.imshow('demo', expanded_frame)
         cv2.waitKey(1)
 
     cap.release()
@@ -352,20 +249,4 @@ def tracking():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="WebRTC webcam demo")
-    parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
-    parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
-    parser.add_argument(
-        "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
-    )
-    arg = parser.parse_args()
-
-    server_thread = Thread(target=run_server, args=(aiohttp_server(), arg))
-    tracking_thread = Thread(target=tracking)
-    server_thread.start()
-    tracking_thread.start()
-    server_thread.join()
-    tracking_thread.join()
+    tracking()
