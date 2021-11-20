@@ -315,16 +315,17 @@ def tracking():
                 x, y, _, _ = code.rect
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
                 qr_point = np.array(convert2xyz(qr_theta, qr_phi))
-                tmp_distance = 1
+                # ここでマッチングの角度の閾値を指定しても良い
+                tmp_cos_distance = -1
                 nearest_idx = -1
                 for i, t in enumerate(tracker.tracks):
                     if t.user:
                         continue
                     t_point = np.array(t.to_xyz())
                     cos_distance = np.inner(qr_point, t_point) / (np.linalg.norm(qr_point) * np.linalg.norm(t_point))
-                    if cos_distance < tmp_distance:
+                    if cos_distance > tmp_cos_distance:
                         nearest_idx = i
-                        tmp_distance = cos_distance
+                        tmp_cos_distance = cos_distance
 
                 if nearest_idx >= 0:
                     user.status = STATUS_TRACKED
@@ -363,9 +364,5 @@ if __name__ == "__main__":
     )
     arg = parser.parse_args()
 
-    server_thread = Thread(target=run_server, args=(aiohttp_server(), arg))
-    tracking_thread = Thread(target=tracking)
-    server_thread.start()
-    tracking_thread.start()
-    server_thread.join()
-    tracking_thread.join()
+    Thread(target=run_server, args=(aiohttp_server(), arg)).start()
+    Thread(target=tracking).start()

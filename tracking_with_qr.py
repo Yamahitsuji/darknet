@@ -205,16 +205,17 @@ def tracking():
                 x, y, w, h = code.rect
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
                 qr_point = np.array(convert2xyz(qr_theta, qr_phi))
-                tmp_distance = 1
+                # ここでマッチングの角度の閾値を指定しても良い
+                tmp_cos_distance = -1
                 nearest_idx = -1
                 for i, t in enumerate(tracker.tracks):
                     if t.user:
                         continue
                     t_point = np.array(t.to_xyz())
                     cos_distance = np.inner(qr_point, t_point) / (np.linalg.norm(qr_point) * np.linalg.norm(t_point))
-                    if cos_distance < tmp_distance:
+                    if cos_distance > tmp_cos_distance:
                         nearest_idx = i
-                        tmp_distance = cos_distance
+                        tmp_cos_distance = cos_distance
 
                 if nearest_idx >= 0:
                     user.status = STATUS_TRACKED
