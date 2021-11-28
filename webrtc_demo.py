@@ -3,7 +3,7 @@ import asyncio
 import json
 import os
 import ssl
-import uuid
+import random
 
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
@@ -32,7 +32,7 @@ STATUS_TRACKED = 1
 
 class User:
     def __init__(self):
-        self.uid = str(uuid.uuid4())
+        self.uid = str(random.randint(1, 50000))
         self.frame = None
         self.status = STATUS_INIT
 
@@ -366,3 +366,9 @@ if __name__ == "__main__":
 
     Thread(target=run_server, args=(aiohttp_server(), arg)).start()
     Thread(target=tracking).start()
+
+'''
+cd Documents/yagi/darknet
+conda activate omni_tracking
+python webrtc_demo.py --host=192.168.1.43
+'''
