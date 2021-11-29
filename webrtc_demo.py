@@ -4,6 +4,8 @@ import json
 import os
 import ssl
 import random
+import signal
+import time
 
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
@@ -154,35 +156,35 @@ def run_server(runner, args):
 
 
 # detection and tracking
-def tracking():
-    network, class_names, class_colors = darknet.load_network(
-        "./cfg/yolov4.cfg",
-        "./cfg/coco.data",
-        "./yolov4.weights",
-        batch_size=1
-    )
-    darknet_width: int = darknet.network_width(network)
-    darknet_height: int = darknet.network_height(network)
+network, class_names, class_colors = darknet.load_network(
+    "./cfg/yolov4.cfg",
+    "./cfg/coco.data",
+    "./yolov4.weights",
+    batch_size=1
+)
+darknet_width: int = darknet.network_width(network)
+darknet_height: int = darknet.network_height(network)
+cap = cv2.VideoCapture(0)
+fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+video_fps: int = int(cap.get(cv2.CAP_PROP_FPS))
+width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+padding_width: int = int(width / 4)
+radius = int(width / math.tau)
+expanded_width: int = width + padding_width * 2
+quarter_left: int = int(padding_width + expanded_width / 4)
+writer = cv2.VideoWriter("out1.mp4", fourcc, video_fps, (expanded_width, height))
+fpss = []
+# tracking parameters
+max_cosine_distance = 0.3
+model_filename = 'deep_sort_yolov4/model_data/mars-small128.pb'
+encoder = gdet.create_box_encoder(model_filename, batch_size=1)
+metric = nn_matching.NearestNeighborDistanceMetric(max_cosine_distance)
+tracker = Tracker(width, height, metric, max_iou_distance=0.7, n_init=6)
+nms_max_overlap = 1.0
 
-    cap = cv2.VideoCapture(0)
-    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    video_fps: int = int(cap.get(cv2.CAP_PROP_FPS))
-    width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    padding_width: int = int(width / 4)
-    radius = int(width / math.tau)
-    expanded_width: int = width + padding_width * 2
-    quarter_left: int = int(padding_width + expanded_width / 4)
-    writer = cv2.VideoWriter("out1.mp4", fourcc, video_fps, (expanded_width, height))
 
-    # tracking parameters
-    max_cosine_distance = 0.3
-    model_filename = 'deep_sort_yolov4/model_data/mars-small128.pb'
-    encoder = gdet.create_box_encoder(model_filename, batch_size=1)
-    metric = nn_matching.NearestNeighborDistanceMetric(max_cosine_distance)
-    tracker = Tracker(width, height, metric, max_iou_distance=0.7)
-    nms_max_overlap = 1.0
-
+def tracking(args):
     def convert2relative(bbox: Tuple[int, int, int, int]) -> Tuple[float, float, float, float]:
         """
         YOLO format use relative coordinates for annotation
@@ -242,9 +244,19 @@ def tracking():
         bottom = int(center_y + h / 2)
         left = int(center_x - w / 2)
         right = int(center_x + w / 2)
-        return cv2.resize(frame[top:bottom, left:right], dsize=(300, 400))
+        return cv2.resize(frame[top:bottom, left:right], dsize=(900, 1200))
+
+    def get_frame_area_tlbr(center_x: int, center_y: int, w: int, h: int) -> Tuple[int, int, int, int]:
+        aspect = 4 / 3
+        if h / w > aspect:
+            w = int(h / aspect)
+        else:
+            h = int(w * aspect)
+        return int(center_x - w / 2), int(center_y - h / 2), int(center_x + w / 2), int(center_y + h / 2)
 
     while True:
+        start_time = time.time()
+
         ret, frame = cap.read()
         if not ret:
             break
@@ -302,17 +314,23 @@ def tracking():
         tracker.predict()
         tracker.update(detections)
 
+        result_frame = expanded_frame.copy()
+
         # QRコードとトラックを結びつける
         d = decode(expanded_frame)
         if d:
             for code in d:
                 uid = code.data.decode('utf-8')
+                x, y, w, h = code.rect
                 user = user_collection.get_user_by_id(uid)
                 # idに対応するuserが存在しない、もしくはuserが存在してすでにトラックされている場合は無視する
-                if not user or user.status == STATUS_TRACKED:
+                if not user:
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 0, 255), 1)
+                    continue
+                if user.status == STATUS_TRACKED:
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 255, 0), 1)
                     continue
 
-                x, y, _, _ = code.rect
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
                 qr_point = np.array(convert2xyz(qr_theta, qr_phi))
                 # ここでマッチングの角度の閾値を指定しても良い
@@ -333,6 +351,10 @@ def tracking():
 
         # view
         for track in tracker.tracks:
+            tlbr = track.to_tlbr()
+            tlbr = (tlbr[0] + padding_width, tlbr[1], tlbr[2] + padding_width, tlbr[3])
+            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (255, 0, 0), 5)
+
             if not track.user:
                 continue
 
@@ -340,16 +362,36 @@ def tracking():
             target = trim_target_from_frame(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3], expanded_frame)
             track.user.frame = target
 
-        cv2.line(expanded_frame, (padding_width, 0), (padding_width, height), (0, 0, 255), thickness=5)
-        cv2.line(expanded_frame, (padding_width + width - 1, 0), (padding_width + width - 1, height),
-                 (0, 0, 255), thickness=5)
-        writer.write(expanded_frame)
-        cv2.imshow('Inference', expanded_frame)
-        cv2.waitKey(1)
+            tlbr = get_frame_area_tlbr(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3])
+            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (0, 128, 255), 5)
+            cv2.putText(result_frame, track.user.uid, tlbr[:2], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255))
 
+        cv2.line(result_frame, (padding_width, 0), (padding_width, height), (0, 0, 255), thickness=3)
+        cv2.line(result_frame, (padding_width + width - 1, 0), (padding_width + width - 1, height),
+                 (0, 0, 255), thickness=3)
+        writer.write(result_frame)
+
+        end_time = time.time()
+        fps = 1 / (end_time - start_time)
+        fpss.append(fps)
+        print(fps)
+
+        if not args.dont_show:
+            cv2.imshow('window', result_frame)
+            key = cv2.waitKey(1)
+            if key == ord('q'):
+                cap.release()
+                writer.release()
+                cv2.destroyAllWindows()
+                print('Average FPS: {}'.format(sum(fpss) / len(fpss)))
+                break
+
+
+def handler(signum, frame):
     cap.release()
     writer.release()
     cv2.destroyAllWindows()
+    print('Average FPS: {}'.format(sum(fpss) / len(fpss)))
 
 
 if __name__ == "__main__":
@@ -362,10 +404,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
     )
+    parser.add_argument("--dont_show", action='store_true',
+                        help="windown inference display. For headless systems")
     arg = parser.parse_args()
 
     Thread(target=run_server, args=(aiohttp_server(), arg)).start()
-    Thread(target=tracking).start()
+    Thread(target=tracking, args=(arg,)).start()
+    signal.signal(signal.SIGINT, handler)
 
 '''
 cd Documents/yagi/darknet
