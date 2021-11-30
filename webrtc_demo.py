@@ -165,6 +165,7 @@ network, class_names, class_colors = darknet.load_network(
 darknet_width: int = darknet.network_width(network)
 darknet_height: int = darknet.network_height(network)
 cap = cv2.VideoCapture(0)
+raw_fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 video_fps: int = int(cap.get(cv2.CAP_PROP_FPS))
 width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -173,6 +174,7 @@ padding_width: int = int(width / 4)
 radius = int(width / math.tau)
 expanded_width: int = width + padding_width * 2
 quarter_left: int = int(padding_width + expanded_width / 4)
+raw_writer = cv2.VideoWriter("raw_out.mp4", raw_fourcc, video_fps, (width, height))
 writer = cv2.VideoWriter("out1.mp4", fourcc, video_fps, (expanded_width, height))
 fpss = []
 # tracking parameters
@@ -363,6 +365,7 @@ def tracking(args):
         cv2.line(result_frame, (padding_width, 0), (padding_width, height), (0, 0, 255), thickness=3)
         cv2.line(result_frame, (padding_width + width - 1, 0), (padding_width + width - 1, height),
                  (0, 0, 255), thickness=3)
+        raw_writer.write(frame)
         writer.write(result_frame)
 
         end_time = time.time()
@@ -375,6 +378,7 @@ def tracking(args):
             key = cv2.waitKey(1)
             if key == ord('q'):
                 cap.release()
+                raw_writer.release()
                 writer.release()
                 cv2.destroyAllWindows()
                 print('Average FPS: {}'.format(sum(fpss) / len(fpss)))
