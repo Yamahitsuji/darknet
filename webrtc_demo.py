@@ -236,13 +236,10 @@ def tracking(args):
         z = int(radius * math.sin(phi))
         return x, y, z
 
-    def trim_target_from_frame(center_x: int, center_y: int, w: int, h: int, frame: np.ndarray) -> np.ndarray:
-        tlbr = get_frame_area_tlbr(center_x, center_y, w, h)
-        return cv2.resize(frame[tlbr[1]:tlbr[3], tlbr[0]:tlbr[2]], dsize=(900, 1200))
+    def trim_target_from_frame(top: int, bottom: int, left: int, right: int, frame: np.ndarray) -> np.ndarray:
+        return cv2.resize(frame[top:bottom, left:right], dsize=(900, 1200))
 
     def get_frame_area_tlbr(center_x: int, center_y: int, w: int, h: int) -> Tuple[int, int, int, int]:
-        w = int(w * 1.5)
-        h = int(h * 1.5)
         aspect = 4 / 3
         if h / w > aspect:
             w = int(h / aspect)
@@ -264,7 +261,7 @@ def tracking(args):
                                                interpolation=cv2.INTER_LINEAR)
         darknet_image = darknet.make_image(darknet_width, darknet_height, 3)
         darknet.copy_image_from_bytes(darknet_image, frame_resized.tobytes())
-        darknet_detections = darknet.detect_image(network, class_names, darknet_image, thresh=.25)
+        darknet_detections = darknet.detect_image(network, class_names, darknet_image, thresh=.75)
         darknet.free_image(darknet_image)
 
         adjusted_detections = []
@@ -355,10 +352,13 @@ def tracking(args):
                 continue
 
             xywh = track.to_xywh()
-            target = trim_target_from_frame(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3], expanded_frame)
-            track.user.frame = target
+            if xywh[2] <= 0:
+                continue
 
             tlbr = get_frame_area_tlbr(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3])
+            target = trim_target_from_frame(tlbr[1], tlbr[3], tlbr[0], tlbr[2], expanded_frame)
+            track.user.frame = target
+
             cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (0, 128, 255), 3)
             cv2.putText(result_frame, track.user.uid, tlbr[:2], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255))
 
