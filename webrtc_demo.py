@@ -235,18 +235,12 @@ def tracking(args):
         return x, y, z
 
     def trim_target_from_frame(center_x: int, center_y: int, w: int, h: int, frame: np.ndarray) -> np.ndarray:
-        aspect = 4 / 3
-        if h / w > aspect:
-            w = int(h / aspect)
-        else:
-            h = int(w * aspect)
-        top = int(center_y - h / 2)
-        bottom = int(center_y + h / 2)
-        left = int(center_x - w / 2)
-        right = int(center_x + w / 2)
-        return cv2.resize(frame[top:bottom, left:right], dsize=(900, 1200))
+        tlbr = get_frame_area_tlbr(center_x, center_y, w, h)
+        return cv2.resize(frame[tlbr[1]:tlbr[3], tlbr[0]:tlbr[2]], dsize=(900, 1200))
 
     def get_frame_area_tlbr(center_x: int, center_y: int, w: int, h: int) -> Tuple[int, int, int, int]:
+        w = int(w * 1.5)
+        h = int(h * 1.5)
         aspect = 4 / 3
         if h / w > aspect:
             w = int(h / aspect)
