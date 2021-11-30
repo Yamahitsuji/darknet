@@ -321,10 +321,10 @@ def tracking(args):
                 user = user_collection.get_user_by_id(uid)
                 # idに対応するuserが存在しない、もしくはuserが存在してすでにトラックされている場合は無視する
                 if not user:
-                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 0, 255), 1)
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 0, 255), 3)
                     continue
                 if user.status == STATUS_TRACKED:
-                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 255, 0), 1)
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 255, 0), 3)
                     continue
 
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
@@ -349,7 +349,7 @@ def tracking(args):
         for track in tracker.tracks:
             tlbr = track.to_tlbr()
             tlbr = (tlbr[0] + padding_width, tlbr[1], tlbr[2] + padding_width, tlbr[3])
-            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (255, 0, 0), 5)
+            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (255, 0, 0), 3)
 
             if not track.user:
                 continue
@@ -359,7 +359,7 @@ def tracking(args):
             track.user.frame = target
 
             tlbr = get_frame_area_tlbr(xywh[0] + padding_width, xywh[1], xywh[2], xywh[3])
-            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (0, 128, 255), 5)
+            cv2.rectangle(result_frame, tlbr[:2], tlbr[2:], (0, 128, 255), 3)
             cv2.putText(result_frame, track.user.uid, tlbr[:2], cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255))
 
         cv2.line(result_frame, (padding_width, 0), (padding_width, height), (0, 0, 255), thickness=3)
