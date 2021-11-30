@@ -237,7 +237,7 @@ def tracking(args):
         return x, y, z
 
     def trim_target_from_frame(top: int, bottom: int, left: int, right: int, frame: np.ndarray) -> np.ndarray:
-        return cv2.resize(frame[top:bottom, left:right], dsize=(900, 1200))
+        return cv2.resize(frame[top:bottom, left:right], dsize=(600, 800))
 
     def get_frame_area_tlbr(center_x: int, center_y: int, w: int, h: int) -> Tuple[int, int, int, int]:
         aspect = 4 / 3
