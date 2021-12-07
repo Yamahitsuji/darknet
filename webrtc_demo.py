@@ -327,7 +327,7 @@ def tracking(args):
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
                 qr_point = np.array(convert2xyz(qr_theta, qr_phi))
                 # ここでマッチングの角度の閾値を指定しても良い
-                tmp_cos_distance = -1
+                tmp_cos_distance = 0.7660 # 40度
                 nearest_idx = -1
                 for i, t in enumerate(tracker.tracks):
                     if t.user:
