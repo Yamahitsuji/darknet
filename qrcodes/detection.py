@@ -20,16 +20,14 @@ def run():
             break
 
         d = decode(frame)
-        if not d:
-            continue
-
-        for qr in d:
-            code = qr.data.decode('utf-8')
-            x, y, w, h = qr.rect
-            cv2.rectangle(frame, (x, y), (x + w, y + y), (0, 0, 255), 3)
-            rad = conv_y2rad(int(y + h / 2), height)
-            cv2.putText(frame, rad, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
-            cv2.putText(frame, code, (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+        if d:
+            for qr in d:
+                code = qr.data.decode('utf-8')
+                x, y, w, h = qr.rect
+                cv2.rectangle(frame, (x, y), (x + w, y + y), (0, 0, 255), 3)
+                rad = conv_y2rad(int(y + h / 2), height)
+                cv2.putText(frame, str(rad), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+                cv2.putText(frame, code, (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
 
         writer.write(frame)
         cv2.imshow('view', frame)
