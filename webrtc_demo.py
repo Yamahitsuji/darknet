@@ -318,10 +318,10 @@ def tracking(args):
                 user = user_collection.get_user_by_id(uid)
                 # idに対応するuserが存在しない、もしくはuserが存在してすでにトラックされている場合は無視する
                 if not user:
-                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 0, 255), 3)
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + h), (0, 0, 255), 3)
                     continue
                 if user.status == STATUS_TRACKED:
-                    cv2.rectangle(result_frame, (x, y), (x + w, y + y), (0, 255, 0), 3)
+                    cv2.rectangle(result_frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
                     continue
 
                 qr_theta, qr_phi = convert2rad(x, y, padding_width)
