@@ -38,7 +38,7 @@ def run():
                 rad = conv_y2rad(int(y + h / 2), height)
                 cv2.putText(frame, str(rad), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
                 # cv2.putText(frame, code, (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
-                cv2.putText(frame, "w: {}, h: {}".format(w, h), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
+                cv2.putText(frame, "w: {}, h: {}".format(w, h), (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
 
         writer.write(frame)
         cv2.imshow('view', frame)
