@@ -4,7 +4,11 @@ import datetime
 
 
 def conv_y2rad(y: int, height: int):
-    return int(90 - y / height * 180)
+    return int(y / height * 180)
+
+
+def conv_x2rad(x: int, width: int):
+    return int(x / width * 360)
 
 
 WriteRaw = True
@@ -35,10 +39,11 @@ def run():
                 # code = qr.data.decode('utf-8')
                 x, y, w, h = qr.rect
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 3)
-                rad = conv_y2rad(int(y + h / 2), height)
-                cv2.putText(frame, str(rad), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
+                rad_x = conv_x2rad(int(x + w/2), width)
+                rad_y = conv_y2rad(int(y + h / 2), height)
+                cv2.putText(frame, "x:{} y:{}".format(rad_x, rad_y), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255))
                 # cv2.putText(frame, code, (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
-                cv2.putText(frame, "w: {}, h: {}".format(w, h), (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
+                cv2.putText(frame, "w:{} h:{}".format(w, h), (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255))
 
         raw_frame = frame.copy()
         if WriteRaw:
