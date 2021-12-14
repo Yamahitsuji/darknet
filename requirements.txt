@@ -14,9 +14,11 @@ chardet==4.0.0
 charset-normalizer==2.0.5
 clang==5.0
 cryptography==35.0.0
+cycler==0.11.0
 dataclasses==0.6
 dnspython==2.1.0
 flatbuffers==1.12
+fonttools==4.28.3
 gast==0.4.0
 google-auth==1.35.0
 google-auth-oauthlib==0.4.6
@@ -30,13 +32,17 @@ imutils==0.5.3
 joblib==1.0.1
 keras==2.6.0
 Keras-Preprocessing==1.1.2
+kiwisolver==1.3.2
 Markdown==3.3.4
+matplotlib==3.5.0
 multidict==5.2.0
 netifaces==0.11.0
 numpy==1.19.5
 oauthlib==3.1.1
 opencv-python==4.5.3.56
 opt-einsum==3.3.0
+packaging==21.3
+pandas==1.1.5
 Pillow==8.4.0
 protobuf==3.18.0
 pyasn1==0.4.8
@@ -44,6 +50,9 @@ pyasn1-modules==0.2.8
 pycparser==2.20
 pyee==8.2.2
 pylibsrtp==0.6.8
+pyparsing==3.0.6
+python-dateutil==2.8.2
+pytz==2021.3
 pyzbar==0.1.8
 qrcode==7.3.1
 requests==2.26.0
@@ -51,6 +60,8 @@ requests-oauthlib==1.3.0
 rsa==4.7.2
 scikit-learn==0.24.2
 scipy==1.5.4
+seaborn==0.11.2
+setuptools-scm==6.3.2
 six==1.15.0
 sklearn==0.0
 tensorboard==2.6.0
@@ -60,6 +71,7 @@ tensorflow==2.6.0
 tensorflow-estimator==2.6.0
 termcolor==1.1.0
 threadpoolctl==2.2.0
+tomli==1.2.2
 typing-extensions==3.7.4.3
 urllib3==1.26.6
 Werkzeug==2.0.1
