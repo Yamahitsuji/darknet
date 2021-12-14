@@ -53,11 +53,11 @@ def run():
 
         for i in range(0, 360, 10):
             x = int(i / 360 * width)
-            color = (255, 0, 0) if i % 30 == 0 else (70, 70, 70)
+            color = (255, 0, 0) if i % 30 == 0 else (0, 165, 255)
             cv2.line(frame, (x, 0), (x, height), color, thickness=1)
         for j in range(0, 180, 10):
             y = int(j / 180 * height)
-            color = (255, 0, 0) if j % 30 == 0 else (70, 70, 70)
+            color = (255, 0, 0) if j % 30 == 0 else (0, 165, 255)
             cv2.line(frame, (0, y), (width, y), color, thickness=1)
         cv2.imshow('view', cv2.resize(frame, dsize=(int(width / 2), int(height / 2))))
 
