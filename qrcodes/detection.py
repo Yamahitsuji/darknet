@@ -50,6 +50,15 @@ def run():
         if WriteRaw:
             raw_writer.write(raw_frame)
         writer.write(frame)
+
+        for i in range(0, 360, 10):
+            x = int(i / 360 * width)
+            color = (255, 0, 0) if i % 30 == 0 else (70, 70, 70)
+            cv2.line(frame, (x, 0), (x, height), color, thickness=1)
+        for j in range(0, 180, 10):
+            y = int(j / 180 * height)
+            color = (255, 0, 0) if j % 30 == 0 else (70, 70, 70)
+            cv2.line(frame, (0, y), (width, y), color, thickness=1)
         cv2.imshow('view', cv2.resize(frame, dsize=(int(width / 2), int(height / 2))))
 
         key = cv2.waitKey(1)
@@ -58,12 +67,6 @@ def run():
             print(file_name)
             photo_name += 1
             cv2.imwrite('./real_out/raw/{}'.format(file_name), raw_frame)
-            for i in range(0, 360, 5):
-                x = int(i / 360 * width)
-                cv2.line(frame, (x, 0), (x, height), (0, 0, 0), thickness=1)
-            for j in range(0, 180, 5):
-                y = int(j / 180 * height)
-                cv2.line(frame, (0, y), (width, y), (0, 0, 0), thickness=1)
             cv2.imwrite('./real_out/result/{}'.format(file_name), frame)
         if key == ord('q'):
             raw_writer.release()
