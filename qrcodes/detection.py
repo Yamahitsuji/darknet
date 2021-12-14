@@ -33,6 +33,8 @@ def run():
         if not ret:
             break
 
+        raw_frame = frame.copy()
+
         d = decode(frame)
         if d:
             for qr in d:
@@ -45,7 +47,6 @@ def run():
                 # cv2.putText(frame, code, (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 0, 255))
                 cv2.putText(frame, "w:{} h:{}".format(w, h), (x, y + h), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255))
 
-        raw_frame = frame.copy()
         if WriteRaw:
             raw_writer.write(raw_frame)
         writer.write(frame)
