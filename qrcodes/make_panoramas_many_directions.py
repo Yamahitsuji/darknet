@@ -23,7 +23,7 @@ def gen_frames(file_path):
     file_name = file_path.split('/')[-1].split('.')[0]
     lat = int(file_name.split('_')[0])
     frame = cv2.imread(file_path)
-    for lon in range(-180, 180, 3):
+    for lon in range(-180, 180, 5):
         rotated_frame = rotate_longitude(frame, lon)
         cv2.imwrite('./out/{}_{}.png'.format(lat, 180 + lon), rotated_frame)
 

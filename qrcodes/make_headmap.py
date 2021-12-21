@@ -38,9 +38,22 @@ def run():
             read[y, x] += 1
 
     heatmap = read / counts
-    plt.figure()
-    sns.heatmap(heatmap, cmap='viridis')
-    plt.savefig('./graph/qr_heatmap.png')
+    # plt.figure()
+    # sns.heatmap(heatmap, cmap='viridis')
+    # plt.savefig('./graph/qr_heatmap.png')
+    x = np.arange(0, 360)
+    y = np.arange(-90, 90)
+    mesh = np.meshgrid(x, y)
+    resized = cv2.resize(heatmap, (360, 180))
+    plt.rcParams["font.size"] = 15
+    plt.contourf(mesh[0], mesh[1], resized, cmap='Spectral_r')
+    plt.xlabel("longitude")
+    plt.xlim(0, 360)
+    plt.ylabel("latitude")
+    plt.ylim(-90, 90)
+    cbar = plt.colorbar()
+    cbar.ax.set_ylim(0, 1)
+    plt.savefig('./graph/read_qr_heatmap.png')
 
 
 if __name__ == '__main__':
