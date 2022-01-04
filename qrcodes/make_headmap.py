@@ -53,7 +53,7 @@ def run():
     plt.ylim(-90, 90)
     cbar = plt.colorbar()
     cbar.ax.set_ylim(0, 1)
-    plt.savefig('./graph/read_qr_heatmap.png')
+    plt.savefig('./graph/qr_heatmap.png')
 
 
 if __name__ == '__main__':

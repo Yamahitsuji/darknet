@@ -12,7 +12,7 @@ def run():
     frame[:] = 255
     qr = qrcode.make(str(code), version=1, box_size=12, border=0,
                      error_correction=qrcode.constants.ERROR_CORRECT_H).convert('RGB')
-    qr_img = cv2.resize(np.array(qr, dtype=np.uint8), dsize=(70, 70))
+    qr_img = cv2.resize(np.array(qr, dtype=np.uint8), dsize=(130, 130))
     qr_height, qr_width, _ = qr_img.shape
     top = int(height / 2 - qr_height / 2)
     bottom = top + qr_height
@@ -20,7 +20,7 @@ def run():
     right = left + qr_width
     frame[top:bottom, left:right] = qr_img
 
-    cv2.imwrite('out/0_0.png', frame)
+    cv2.imwrite('0_0.png', frame)
 
 
 if __name__ == '__main__':
